@@ -1,4 +1,10 @@
-import { namespaces } from '../../lib/registry';
+// Ensure we're not in production mode when building routes
+// This prevents lib/registry.ts from trying to import routes.js before it's created
+const originalNodeEnv = process.env.NODE_ENV;
+const originalVercelEnv = process.env.VERCEL_ENV;
+process.env.NODE_ENV = 'development';
+process.env.VERCEL_ENV = '';
+
 import { RadarItem } from '../../lib/types';
 import { parse } from 'tldts';
 import fs from 'node:fs';
@@ -7,6 +13,15 @@ import toSource from 'tosource';
 
 import { getCurrentPath } from '../../lib/utils/helpers';
 const __dirname = getCurrentPath(import.meta.url);
+
+// Ensure assets/build directory exists
+const buildDir = path.join(__dirname, '../../assets/build');
+if (!fs.existsSync(buildDir)) {
+    fs.mkdirSync(buildDir, { recursive: true });
+}
+
+// Dynamically import registry after setting environment variables
+const { namespaces } = await import('../../lib/registry');
 
 const foloAnalysis = await (
     await fetch('https://api.follow.is/discover/rsshub-analytics', {
